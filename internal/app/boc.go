@@ -152,7 +152,6 @@ func parseBOCDescription(logger *slog.Logger, descriptionStr string) BOCTxByDesc
 	// Parse country
 	var countryRegex = regexp.MustCompile(`^([A-Z]{2}) | ([A-Z]{2})$`)
 	if loc := countryRegex.FindSubmatchIndex(description); loc != nil {
-		fmt.Println(loc)
 		if loc[2] > -1 {
 			tx.Country = string(description[loc[2]:loc[3]])
 		} else {
