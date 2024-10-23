@@ -20,7 +20,7 @@ func Test_parseBOCDescription(t *testing.T) {
 	}{
 		{
 			"real example 1",
-			args{"Card 1**2345 2024-10-10 71.41 EUR Auth 318622 Trace 357830 PURCHASE LU WWW.ALIEXPRESS.COM"},
+			args{"Card 1***2345 2024-10-10 71.41 EUR Auth 318622 Trace 357830 PURCHASE LU WWW.ALIEXPRESS.COM"},
 			BOCTxByDescription{
 				Card:        "1***2345",
 				Trace:       "357830",
@@ -58,7 +58,7 @@ func Test_parseBOCDescription(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := parseBOCDescription(slog.Default(), tt.args.description); !reflect.DeepEqual(got, tt.want) {
-				assert.Equal(t, got, tt.want)
+				assert.Equal(t, tt.want, got)
 			}
 		})
 	}

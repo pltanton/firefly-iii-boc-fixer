@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log/slog"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/pltanton/firefly-iii-boc-fixer/internal/firefly"
@@ -48,7 +47,7 @@ func fixBOC(
 
 	bocTx := parseBOCDescription(logger, tx.Description)
 	newTags := []string{processedTag}
-	if tx.Tags != nil && len(tx.Tags) > 0 {
+	if len(tx.Tags) > 0 {
 		for _, tag := range tx.Tags {
 			if tag == processedTag {
 				logger.Debug("Skipping by presence of processing tag")
@@ -102,27 +101,27 @@ func parseBOCDescription(logger *slog.Logger, descriptionStr string) BOCTxByDesc
 	}
 
 	// Parse Card
-	var cardRegex = regexp.MustCompile(`Card ?\d\*{3}\d{4}`)
-	if loc := cardRegex.FindIndex(description); loc != nil {
-		tx.Card = strings.TrimSpace(string(description[loc[0]+4 : loc[1]]))
+	var cardRegex = regexp.MustCompile(`Card ?(\d\*{3}\d{4})`)
+	if loc := cardRegex.FindSubmatchIndex(description); loc != nil {
+		tx.Card = string(description[loc[2]:loc[3]])
 		description = cutRespectSpace(description, loc[0], loc[1])
 	} else {
 		logger.Debug("Card not found in BoC description", "description", descriptionStr)
 	}
 
 	// Parse Auth index
-	var authRegex = regexp.MustCompile(`Auth ?\d+`)
-	if loc := authRegex.FindIndex(description); loc != nil {
-		tx.Auth = strings.TrimSpace(string(description[loc[0]+4 : loc[1]]))
+	var authRegex = regexp.MustCompile(`Auth ?(\d+)`)
+	if loc := authRegex.FindSubmatchIndex(description); loc != nil {
+		tx.Auth = string(description[loc[2]:loc[3]])
 		description = cutRespectSpace(description, loc[0], loc[1])
 	} else {
 		logger.Debug("Auth not found in BoC description", "description", descriptionStr)
 	}
 
 	// Parse Trace index
-	var traceRegex = regexp.MustCompile(`Trace ?\d+`)
-	if loc := traceRegex.FindIndex(description); loc != nil {
-		tx.Trace = strings.TrimSpace(string(description[loc[0]+5 : loc[1]]))
+	var traceRegex = regexp.MustCompile(`Trace ?(\d+)`)
+	if loc := traceRegex.FindSubmatchIndex(description); loc != nil {
+		tx.Trace = string(description[loc[2]:loc[3]])
 		description = cutRespectSpace(description, loc[0], loc[1])
 	} else {
 		logger.Debug("Trace not found in BoC description", "description", descriptionStr)
@@ -151,9 +150,14 @@ func parseBOCDescription(logger *slog.Logger, descriptionStr string) BOCTxByDesc
 	}
 
 	// Parse country
-	var countryRegex = regexp.MustCompile(`^[A-Z]{2} | [A-Z]{2}$`)
-	if loc := countryRegex.FindIndex(description); loc != nil {
-		tx.Country = strings.TrimSpace(string(description[loc[0]:loc[1]]))
+	var countryRegex = regexp.MustCompile(`^([A-Z]{2}) | ([A-Z]{2})$`)
+	if loc := countryRegex.FindSubmatchIndex(description); loc != nil {
+		fmt.Println(loc)
+		if loc[2] > -1 {
+			tx.Country = string(description[loc[2]:loc[3]])
+		} else {
+			tx.Country = string(description[loc[4]:loc[5]])
+		}
 		description = cutRespectSpace(description, loc[0], loc[1])
 	} else {
 		logger.Debug("Country not found in BoC description", "description", descriptionStr)
